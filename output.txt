@@ -1,0 +1,79 @@
+----------TEST 1: SECURITY (AWAY)--------
+=== HomeGuard Security System ===
+Time: 12:38:35
+Mode: AWAY
+
+[READING] Living Room Motion: False
+[READING] Front Door: OPEN
+[READING] Kitchen Temperature: 36.9
+[READING] Bedroom Smoke: True
+[ALERT!] 🚨 HIGH: SECURITY: Front Door opened while in AWAY mode!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in Bedroom Smoke!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SECURITY: Multiple sensors triggered - possible break-in!
+[LOG] [12:38:35] Sending notification to homeowner...
+
+Time: 12:38:35
+[READING] Living Room Motion: True
+[READING] Front Door: OPEN
+[READING] Kitchen Temperature: 89.1
+[READING] Bedroom Smoke: True
+[ALERT!] 🚨 HIGH: SECURITY: Motion detected in Living Room Motion while in AWAY mode!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SECURITY: Front Door opened while in AWAY mode!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in Bedroom Smoke!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SECURITY: Multiple sensors triggered - possible break-in!
+[LOG] [12:38:35] Sending notification to homeowner...
+
+----------TEST 2: SAFETY------
+=== HomeGuard Security System ===
+Time: 12:38:35
+Mode: HOME
+
+[READING] Living Room Motion: False
+[READING] Front Door: CLOSED
+[READING] Kitchen Temperature: 20
+[READING] Bedroom Smoke: True
+[ALERT!] 🚨 HIGH: SAFETY: Kitchen Temperature temp 20F - frozen pipe risk!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in Bedroom Smoke!
+[LOG] [12:38:35] Sending notification to homeowner...
+
+----------TEST 3: COMFORT (HOME)-------
+=== HomeGuard Security System ===
+Time: 12:38:35
+Mode: HOME
+
+[READING] Living Room Motion: True
+[READING] Front Door: OPEN
+[READING] Kitchen Temperature: 97
+[READING] Bedroom Smoke: True
+[ALERT!] 🚨 HIGH: SAFETY: Kitchen Temperature temp 97F - equipment failure risk!
+[LOG] [12:38:35] Sending notification to homeowner...
+[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in Bedroom Smoke!
+[LOG] [12:38:35] Sending notification to homeowner...
+
+Time: 12:38:35
+[READING] Living Room Motion: True
+[READING] Front Door: OPEN
+[READING] Kitchen Temperature: 49.5
+[READING] Bedroom Smoke: True
+[NOTIFY] ⚠️ COMFORT: Front Door left open too long (6.0 min)
+[NOTIFY] ⚠️ COMFORT: Kitchen Temperature outside comfort range (49.5°F)
+[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in Bedroom Smoke!
+[LOG] [12:38:35] Sending notification to homeowner...
+
+----------TEST 4: SLEEP MODE-------
+=== HomeGuard Security System ===
+Time: 12:38:35
+Mode: SLEEP
+
+[READING] Living Room Motion: True
+[READING] Front Door: OPEN
+[READING] Kitchen Temperature: 50.5
+[READING] Bedroom Smoke: False
+[ALERT!] 🚨 HIGH: SECURITY: Motion detected in Living Room Motion while in SLEEP mode!
+[LOG] [12:38:35] Sending notification to homeowner...
