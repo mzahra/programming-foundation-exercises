@@ -48,7 +48,7 @@ def format_alert(sensors, mode):
         if sensor.type == "temperature" and sensor.isAbnormal():
             if sensor.value < 35:
                 msg = f"SAFETY: {sensor.name} temp {sensor.value}F - frozen pipe risk!"
-            elif sensor.value > 95:
+            else:
                 msg = f"SAFETY: {sensor.name} temp {sensor.value}F - equipment failure risk!"
             print(f"[ALERT!] 🚨 HIGH: {msg}")
             print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
