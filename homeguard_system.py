@@ -1,6 +1,7 @@
 import random
 from datetime import datetime, timedelta
 
+
 class Sensor:
     def __init__(self, name, sensor_type, location):
         self.name = name
@@ -12,30 +13,36 @@ class Sensor:
     def read(self):
         if self.type == "motion":
             self.value = random.choice([True, False])
+
         elif self.type == "door":
             self.value = random.choice(["OPEN", "CLOSED"])
-            if self.value == "OPEN" and self.opened_at is None:
-                self.opened_at = datetime.now()
-            elif self.value == "CLOSED":
+            if self.value == "OPEN":
+                self.opened_at = self.opened_at or datetime.now()
+            else:
                 self.opened_at = None
+
         elif self.type == "temperature":
             self.value = round(random.uniform(30, 100), 1)
+
         elif self.type == "smoke":
             self.value = random.choice([True, False])
-        return self.value
 
     def isAbnormal(self):
         if self.type == "temperature":
             return self.value < 35 or self.value > 95
-        if self.type in ("motion", "smoke"):
-            return self.value is True
-        if self.type == "door":
+        elif self.type == "door":
             return self.value == "OPEN"
-        return False
+        else:
+            return self.value
 
     def reset(self):
         self.value = None
         self.opened_at = None
+
+
+def send_message(level, message):
+    print(f"[{level}] {message}")
+    print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
 
 
 def format_alert(sensors, mode):
@@ -44,56 +51,89 @@ def format_alert(sensors, mode):
     for sensor in sensors:
         triggered = False
 
-        # safety checks: always run, regardless of mode
+        # Safety alerts (always checked)
         if sensor.type == "temperature" and sensor.isAbnormal():
+
             if sensor.value < 35:
-                msg = f"SAFETY: {sensor.name} temp {sensor.value}F - frozen pipe risk!"
+                send_message(
+                    "ALERT!",
+                    f"🚨HIGH: SAFETY: {sensor.name} temperature too low ({sensor.value}°F)"
+                )
             else:
-                msg = f"SAFETY: {sensor.name} temp {sensor.value}F - equipment failure risk!"
-            print(f"[ALERT!] 🚨 HIGH: {msg}")
-            print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
+                send_message(
+                    "ALERT!",
+                    f"🚨HIGH: SAFETY: {sensor.name} temperature too high ({sensor.value}°F)"
+                )
+
             triggered = True
 
         elif sensor.type == "smoke" and sensor.isAbnormal():
-            print(f"[ALERT!] 🚨 HIGH: SAFETY: Smoke detected in {sensor.name}!")
-            print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
+            send_message(
+                "ALERT!",
+                f"🚨HIGH: SAFETY: Smoke detected in {sensor.name}"
+            )
             triggered = True
 
-        # mode-based checks
+        # HOME mode
         elif mode == "HOME":
+
             if sensor.type == "temperature" and not (65 <= sensor.value <= 75):
-                print(f"[NOTIFY] ⚠️ COMFORT: {sensor.name} outside comfort range ({sensor.value}°F)")
-                triggered = True
+                send_message(
+                    "NOTIFY",
+                    f"⚠️ COMFORT: {sensor.name} is outside the comfort range ({sensor.value}°F)"
+                )
+
             elif sensor.type == "door" and sensor.opened_at:
-                minutes_open = (datetime.now() - sensor.opened_at).total_seconds() / 60
-                if minutes_open > 5:
-                    print(f"[NOTIFY] ⚠️ COMFORT: {sensor.name} left open too long ({minutes_open:.1f} min)")
-                    triggered = True
+                minutes = (datetime.now() - sensor.opened_at).total_seconds() / 60
 
+                if minutes > 5:
+                    send_message(
+                        "NOTIFY",
+                        f"⚠️ COMFORT: {sensor.name} has been open for {minutes:.1f} minutes"
+                    )
+
+        # AWAY mode
         elif mode == "AWAY":
+
             if sensor.type == "motion" and sensor.value:
-                print(f"[ALERT!] 🚨 HIGH: SECURITY: Motion detected in {sensor.name} while in AWAY mode!")
-                print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
-                triggered = True
-            elif sensor.type == "door" and sensor.value == "OPEN":
-                print(f"[ALERT!] 🚨 HIGH: SECURITY: {sensor.name} opened while in AWAY mode!")
-                print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
+                send_message(
+                    "ALERT!",
+                    f"🚨HIGH: SECURITY: Motion detected in {sensor.name}"
+                )
                 triggered = True
 
-        elif mode == "SLEEP" and sensor.type == "motion" and sensor.value and sensor.location != "Bedroom":
-            print(f"[ALERT!] 🚨 HIGH: SECURITY: Motion detected in {sensor.name} while in SLEEP mode!")
-            print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
+            elif sensor.type == "door" and sensor.value == "OPEN":
+                send_message(
+                    "ALERT!",
+                    f"🚨 HIGH: SECURITY: {sensor.name} opened while in AWAY mode"
+                )
+                triggered = True
+
+        # SLEEP mode
+        elif (
+            mode == "SLEEP"
+            and sensor.type == "motion"
+            and sensor.value
+            and sensor.location != "Bedroom"
+        ):
+            send_message(
+                "ALERT!",
+                f"🚨HIGH: SECURITY: Motion detected in {sensor.name} while in SLEEP mode"
+            )
             triggered = True
 
         if triggered:
             triggered_count += 1
 
-    # multi-sensor break-in check
+    # Multiple sensor trigger
     if mode == "AWAY" and triggered_count >= 2:
-        print("[ALERT!] 🚨 HIGH: SECURITY: Multiple sensors triggered - possible break-in!")
-        print(f"[LOG] [{datetime.now().strftime('%H:%M:%S')}] Sending notification to homeowner...")
+        send_message(
+            "ALERT!",
+            "🚨HIGH: SECURITY: Multiple sensors triggered - possible break-in!"
+        )
 
     return triggered_count
+
 
 def initialize_sensors():
     return [
@@ -102,50 +142,93 @@ def initialize_sensors():
         Sensor("Kitchen Temperature", "temperature", "Kitchen"),
         Sensor("Bedroom Smoke", "smoke", "Bedroom"),
     ]
- 
- 
-def run_cycle(sensors, mode, is_first=False, forced_values=None):
-    """Runs one reading cycle: prints header/time, reads sensors, checks alerts."""
-    forced_values = forced_values or {}
- 
-    if is_first:
+
+
+def run_cycle(sensors, mode, first=False, forced=None):
+    forced = forced or {}
+
+    if first:
         print("=== HomeGuard Security System ===")
-        print(f"Time: {datetime.now().strftime('%H:%M:%S')}")
-        print(f"Mode: {mode}\n")
-    else:
-        print(f"\nTime: {datetime.now().strftime('%H:%M:%S')}")
- 
-    for s in sensors:
-        if s.name in forced_values:
-            s.value = forced_values[s.name]
-            if s.type == "door" and s.value == "OPEN" and s.opened_at is None:
-                s.opened_at = datetime.now()
+        print(f"Mode: {mode}")
+
+    print(f"\nTime: {datetime.now().strftime('%H:%M:%S')}")
+
+    for sensor in sensors:
+
+        if sensor.name in forced:
+            sensor.value = forced[sensor.name]
+
+            if sensor.type == "door" and sensor.value == "OPEN":
+                sensor.opened_at = sensor.opened_at or datetime.now()
+
         else:
-            s.read()
-        print(f"[READING] {s.name}: {s.value}")
- 
+            sensor.read()
+
+        print(f"[READING] {sensor.name}: {sensor.value}")
+
     format_alert(sensors, mode)
- 
- 
+
+
 if __name__ == "__main__":
-    print("----------TEST 1: SECURITY (AWAY)--------")
+
+    print("---------- TEST 1: SECURITY (AWAY) ----------")
     sensors = initialize_sensors()
-    run_cycle(sensors, "AWAY", is_first=True)
-    run_cycle(sensors, "AWAY", forced_values={"Front Door": "OPEN", "Living Room Motion": True})
- 
-    print("\n----------TEST 2: SAFETY------")
+
+    run_cycle(sensors, "AWAY", first=True)
+
+    run_cycle(
+        sensors,
+        "AWAY",
+        forced={
+            "Front Door": "OPEN",
+            "Living Room Motion": True,
+        },
+    )
+
+    print("\n---------- TEST 2: SAFETY ----------")
     sensors = initialize_sensors()
-    run_cycle(sensors, "HOME", is_first=True,
-              forced_values={"Kitchen Temperature": 20, "Bedroom Smoke": True})
- 
-    print("\n----------TEST 3: COMFORT (HOME)-------")
+
+    run_cycle(
+        sensors,
+        "HOME",
+        first=True,
+        forced={
+            "Kitchen Temperature": 20,
+            "Bedroom Smoke": True,
+        },
+    )
+
+    print("\n---------- TEST 3: COMFORT (HOME) ----------")
     sensors = initialize_sensors()
-    run_cycle(sensors, "HOME", is_first=True, forced_values={"Kitchen Temperature": 97})
-    door = sensors[1]
-    door.value = "OPEN"
-    door.opened_at = datetime.now() - timedelta(minutes=6)
-    run_cycle(sensors, "HOME", forced_values={"Front Door": "OPEN"})
- 
-    print("\n----------TEST 4: SLEEP MODE-------")
+
+    run_cycle(
+        sensors,
+        "HOME",
+        first=True,
+        forced={
+            "Kitchen Temperature": 97,
+        },
+    )
+
+    sensors[1].value = "OPEN"
+    sensors[1].opened_at = datetime.now() - timedelta(minutes=6)
+
+    run_cycle(
+        sensors,
+        "HOME",
+        forced={
+            "Front Door": "OPEN",
+        },
+    )
+
+    print("\n---------- TEST 4: SLEEP MODE ----------")
     sensors = initialize_sensors()
-    run_cycle(sensors, "SLEEP", is_first=True, forced_values={"Living Room Motion": True})
+
+    run_cycle(
+        sensors,
+        "SLEEP",
+        first=True,
+        forced={
+            "Living Room Motion": True,
+        },
+    )
